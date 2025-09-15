@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Secure Login</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .bg-animation { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 0; }
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg"><path d="M0,60 C150,120 350,0 600,60 C850,120 1050,0 1200,60 L1200,120 L0,120 Z" fill="rgba(255,255,255,0.1)"/></svg>') repeat-x;
+            animation: waveAnimation 4s ease-in-out infinite;
+        }
+        .wave:nth-child(2) { bottom: 10px; animation: waveAnimation 6s ease-in-out infinite reverse; opacity: 0.5; }
+        .wave:nth-child(3) { bottom: 20px; animation: waveAnimation 3s ease-in-out infinite; opacity: 0.3; }
+        @keyframes waveAnimation { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-25px); } }
+        .login-container {
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px); border: 1px solid var(--glass-border);
+            padding: 60px 50px; border-radius: 30px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            width: 100%; max-width: 480px; position: relative; z-index: 10;
+            animation: containerSlideUp 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        @keyframes containerSlideUp { 0% { opacity: 0; transform: translateY(100px) scale(0.9); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .login-header { text-align: center; margin-bottom: 50px; }
+        .login-icon {
+            width: 100px; height: 100px; background: var(--primary-gradient); border-radius: 25px;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 30px;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: iconPulse 3s ease-in-out infinite;
+        }
+        @keyframes iconPulse { 0%, 100% { transform: scale(1); box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4), 0 0 0 0 rgba(102, 126, 234, 0.4); } 50% { transform: scale(1.08); box-shadow: 0 25px 50px rgba(102, 126, 234, 0.6), 0 0 0 10px rgba(102, 126, 234, 0.1); } }
+        .login-icon::before { content: "🛡️"; font-size: 48px; }
+        h2 {
+            color: #ffffff; font-size: 36px; font-weight: 800; margin-bottom: 12px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); background: linear-gradient(45deg, #ffffff, #f0f0f0);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .subtitle { color: rgba(255, 255, 255, 0.8); font-size: 18px; }
+        .login-form { display: flex; flex-direction: column; gap: 30px; }
+        .input-group { position: relative; }
+        .input-wrapper {
+            position: relative; border-radius: 15px; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2); transition: all 0.4s;
+        }
+        .input-wrapper:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        .input-wrapper.focused { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.5); transform: translateY(-5px); box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3); }
+        .input-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 24px; z-index: 2; }
+        input[type="text"], input[type="password"] {
+            width: 100%; padding: 22px 20px 22px 70px; border: none; border-radius: 15px;
+            font-size: 18px; background: transparent; color: #ffffff; outline: none;
+        }
+        input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .floating-label {
+            position: absolute; left: 70px; top: 22px; color: rgba(255, 255, 255, 0.6);
+            font-size: 18px; pointer-events: none; transition: all 0.4s; z-index: 1;
+        }
+        input:focus + .input-icon + .floating-label, input:not(:placeholder-shown) + .input-icon + .floating-label {
+            top: -12px; left: 15px; font-size: 14px; color: #ffffff; background: rgba(102, 126, 234, 0.8);
+            padding: 4px 12px; border-radius: 20px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .login-btn {
+            width: 100%; padding: 22px; background: var(--primary-gradient); border: none; border-radius: 15px;
+            color: white; font-size: 20px; font-weight: 700; cursor: pointer; position: relative;
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4); transition: all 0.4s;
+        }
+        .login-btn:hover { transform: translateY(-5px); box-shadow: 0 25px 50px rgba(102, 126, 234, 0.6); }
+        .loading-spinner { display: none; width: 24px; height: 24px; margin-right: 12px; position: relative; display: inline-block; vertical-align: middle;}
+        .loading-spinner::before, .loading-spinner::after {
+            content: ""; position: absolute; width: 24px; height: 24px; border: 2px solid transparent;
+            border-top: 2px solid #ffffff; border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        .loading-spinner::after { border-top: 2px solid rgba(255, 255, 255, 0.3); animation-direction: reverse; animation-duration: 0.5s; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error-message {
+            color: #ffffff; background: rgba(239, 68, 68, 0.2); backdrop-filter: blur(10px);
+            border: 1px solid rgba(239, 68, 68, 0.4); padding: 16px 20px; border-radius: 12px;
+            font-weight: 600; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon"></div>
+            <h2>Secure Portal</h2>
+            <p class="subtitle">Administrative Access Gateway</p>
+        </div>
+        
+        <form class="login-form" id="loginForm" action="{{ url_for('login') }}" method="post">
+            
+            {% if error %}
+                <div class="error-message">❌ {{ error }}</div>
+            {% endif %}
+
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="text" id="username" name="username" placeholder=" " required autocomplete="username" value="admin">
+                    <div class="input-icon">👤</div>
+                    <label class="floating-label" for="username">Username</label>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" placeholder=" " required autocomplete="current-password" value="admin1">
+                    <div class="input-icon">🔐</div>
+                    <label class="floating-label" for="password">Password</label>
+                </div>
+            </div>
+            
+            <button type="submit" class="login-btn" id="loginBtn">
+                <div class="loading-spinner" style="display: none;"></div>
+                <span>Access Portal</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loadingSpinner = loginBtn.querySelector('.loading-spinner');
+
+            form.addEventListener('submit', () => {
+                // When the form is submitted, show the loading spinner.
+                loadingSpinner.style.display = 'inline-block';
+                loginBtn.disabled = true;
+                loginBtn.querySelector('span').textContent = 'Authenticating...';
+            });
+
+            // Simple focus effects for input fields
+            document.querySelectorAll('input').forEach(input => {
+                const wrapper = input.closest('.input-wrapper');
+                if(wrapper) {
+                    input.addEventListener('focus', () => wrapper.classList.add('focused'));
+                    input.addEventListener('blur', () => wrapper.classList.remove('focused'));
+                }
+            });
+        });
+    </script>
+</body>
+</html>

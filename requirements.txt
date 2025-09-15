@@ -1,0 +1,17 @@
+Flask
+requests
+selenium
+
+env
+# --- Flask App Configuration ---
+FLASK_SECRET_KEY="123456789"
+
+# --- Admin Credentials ---
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="admin1"
+
+# --- Infobip SMS Service Configuration ---
+# Get these values from your Infobip account dashboard
+INFOBIP_BASE_URL="api.infobip.com"
+INFOBIP_API_KEY="ef0bbd4821617bd62e04a9a3dc0119b1-46c74152-2b83-474e-ae14-c027361d6927"
+INFOBIP_FROM_NUMBER="447491163443"

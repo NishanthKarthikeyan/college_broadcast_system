@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - College Broadcast System</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column; /* Centering and adding space for logout */
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+        .dashboard-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            padding: 50px 40px;
+            border-radius: 30px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+        .dashboard-header { text-align: center; margin-bottom: 40px; }
+        .dashboard-icon {
+            width: 80px; height: 80px; background: var(--secondary-gradient);
+            border-radius: 20px; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 20px;
+            box-shadow: 0 15px 35px rgba(79, 172, 254, 0.4);
+        }
+        .dashboard-icon::before { content: "📢"; font-size: 36px; }
+        h2 {
+            color: var(--text-primary); font-size: 32px; font-weight: 800; margin-bottom: 8px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .broadcast-form { display: flex; flex-direction: column; gap: 25px; }
+        .form-group { position: relative; }
+        label {
+            display: block; margin-bottom: 12px; color: var(--text-primary);
+            font-weight: 600; font-size: 16px;
+        }
+        .input-wrapper {
+            position: relative; border-radius: 15px; background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2); transition: all 0.3s ease;
+        }
+        .input-wrapper:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        select, textarea {
+            width: 100%; padding: 18px 20px; border: none; border-radius: 15px;
+            font-size: 16px; font-weight: 500; background: transparent;
+            color: var(--text-primary); outline: none; font-family: inherit;
+        }
+        select {
+            cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 15px center; background-size: 20px;
+        }
+        select option { background: #2c3e50; color: white; }
+        textarea { height: 140px; resize: vertical; }
+        textarea::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .submit-btn {
+            width: 100%; padding: 20px; background: var(--secondary-gradient);
+            border: none; border-radius: 15px; color: white; font-size: 18px;
+            font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(79, 172, 254, 0.4); margin-top: 10px;
+        }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 25px 50px rgba(79, 172, 254, 0.6); }
+        .loading-spinner { display: none; width: 20px; height: 20px; margin-right: 10px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .flash-message {
+            padding: 15px 20px; margin-top: 25px; border-radius: 15px; text-align: center;
+            font-weight: 600; font-size: 16px; border: 1px solid;
+        }
+        .flash-message.success { background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); }
+        .flash-message.warning { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); }
+        .character-count { text-align: right; font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 8px; }
+        .logout-btn {
+            margin-top: 20px; padding: 10px 20px; background: transparent; color: white;
+            border: 1px solid white; border-radius: 10px; text-decoration: none; font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover { background: white; color: #764ba2; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div class="dashboard-icon"></div>
+            <h2>College Broadcast System</h2>
+        </div>
+        
+        <form class="broadcast-form" id="broadcastForm" action="{{ url_for('send') }}" method="post">
+            <div class="form-group">
+                <label for="year">Select Academic Year</label>
+                <div class="input-wrapper">
+                    <select id="year" name="year" required>
+                        <option value="">Choose Year...</option>
+                        <option value="all_years">🎯 All Years</option>
+                        <option value="1">📚 1st Year</option>
+                        <option value="2">📖 2nd Year</option>
+                        <option value="3">📝 3rd Year</option>
+                        <option value="4">🎓 4th Year</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="department">Select Department</label>
+                <div class="input-wrapper">
+                    <select id="department" name="department" required>
+                        <option value="">Choose Department...</option>
+                        <option value="all_departments">🏢 All Departments</option>
+                        <option value="CSE">💻 Computer Science & Engineering</option>
+                        <option value="AI&DS">🤖 AI & Data Science</option>
+                        <option value="IT">🌐 Information Technology</option>
+                        <option value="CIVIL">🏗️ Civil Engineering</option>
+                        <option value="EEE">⚡ Electrical & Electronics</option>
+                        <option value="EIE">💡 Electronics & Instrumentation</option>
+                        <option value="BME">🧬 Biomedical Engineering</option>
+                        <option value="S&H">📚 Science & Humanities</option>
+                        <option value="BIOTECH">🧪 Biotechnology</option>
+                        <option value="CYB">🔐 Cyber Security</option>
+                        <option value="AIML">🤖 AI & Machine Learning</option>
+                        <option value="ECE">📡 Electronics & Communication</option>
+                        <option value="MECH">⚙️ Mechanical Engineering</option>
+                        <option value="MBA">💼 Master of Business Administration</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Broadcast Message</label>
+                <div class="input-wrapper">
+                    <textarea id="message" name="message" placeholder="📝 Type your announcement here..." required minlength="10" maxlength="500"></textarea>
+                </div>
+                <div class="character-count"><span id="charCount">0</span>/500</div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <div class="loading-spinner"></div>
+                <span>🚀 Send Broadcast</span>
+            </button>
+
+            <div id="flashContainer">
+              {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                  {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                  {% endfor %}
+                {% endif %}
+              {% endwith %}
+            </div>
+        </form>
+    </div>
+
+    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('broadcastForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingSpinner = submitBtn.querySelector('.loading-spinner');
+            const messageTextarea = document.getElementById('message');
+            const charCount = document.getElementById('charCount');
+
+            // Show a loading spinner when the form is submitted
+            form.addEventListener('submit', () => {
+                // Basic validation check before showing loader
+                if (form.checkValidity()) {
+                    loadingSpinner.style.display = 'inline-block';
+                    submitBtn.disabled = true;
+                    submitBtn.querySelector('span').textContent = 'Sending...';
+                }
+            });
+
+            // Update character count on input
+            messageTextarea.addEventListener('input', () => {
+                const count = messageTextarea.value.length;
+                charCount.textContent = count;
+            });
+        });
+    </script>
+</body>
+</html>
